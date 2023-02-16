@@ -2,16 +2,18 @@ require 'sqlite3'
 require 'securerandom'
 require 'bcrypt'
 
-class User
-    attr_accessor :id, :username, :encrypted_password, :pfp_file_id, :creation_date, :email
+class Product
+    attr_accessor :id, :user_id, :title, :description, :creation_date, :expiration_date, :is_sold, :sold_date
 
-    def initialize(username, encrypted_password, pfp_file_id, creation_date, email)
+    def initialize(user_id, title, description, creation_date, expiration_date, is_sold, sold_date)
         @id = SecureRandom.uuid
-        @username = username
-        @encrypted_password = encrypted_password
-        @pfp_file_id = pfp_file_id
+        @user_id = user_id
+        @title = title
+        @description = description
         @creation_date = creation_date
-        @email = email
+        @expiration_date = expiration_date
+        @is_sold = is_sold
+        @sold_date = sold_date
     end
 
     def self.db
@@ -19,25 +21,7 @@ class User
     end
 
     def self.find(id)
-        row = db.execute('SELECT * FROM users WHERE id = ?', id).first
-        return nil unless row
-
-        user = new(*row[1..-1])
-        user.id = row[0]
-        user
-    end
-
-    def self.find_by_username(username)
-        row = db.execute('SELECT * FROM users WHERE username = ?', username).first
-        return nil unless row
-
-        user = new(*row[1..-1])
-        user.id = row[0]
-        user
-    end
-
-    def self.find_by_email(email)
-        row = db.execute('SELECT * FROM users WHERE email = ?', email).first
+        row = db.execute('SELECT * FROM products WHERE id = ?', id).first
         return nil unless row
 
         user = new(*row[1..-1])
@@ -48,6 +32,7 @@ class User
     def save_field(field)
         return if @id.nil?
 
+        # Check if the field exists as a public attribute of the User class
         unless respond_to?(field)
             puts "Error: #{field} is not a valid field for the User class."
             return
@@ -66,7 +51,7 @@ class User
         elsif new_value.is_a?(TrueClass) || new_value.is_a?(FalseClass)
             new_value = new_value ? 1 : 0
         end
-        old_value = self.class.db.execute("SELECT #{field} FROM users WHERE id = ?", @id).flatten.first
+        old_value = self.class.db.execute("SELECT #{field} FROM products WHERE id = ?", @id).flatten.first
 
         # Check if the new field value is nil or empty
         if new_value.nil? || new_value.to_s.empty?
@@ -80,18 +65,25 @@ class User
             return
         end
 
-        self.class.db.execute("UPDATE users SET #{field} = ? WHERE id = ?", new_value, @id)
+        self.class.db.execute("UPDATE products SET #{field} = ? WHERE id = ?", new_value, @id)
     end
 
     def insert
         creation_date = @creation_date.iso8601
+        expiration_date = @expiration_date.iso8601
+
+        sold_date = nil
+        sold_date = @sold_date.iso8601 if @sold_date.instance_of?(Time)
+
+        is_sold = 0
+        is_sold = 1 if @is_sold == true
 
         self.class.db.execute(
-            'INSERT INTO users (id, username, password, pfp_file_id, creation_date, email) VALUES (?, ?, ?, ?, ?, ?)', @id, @username, @encrypted_password, @pfp_file_id, creation_date, @email
+            'INSERT INTO products (id, user_id, title, description, creation_date, expiration_date, is_sold, sold_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', @id, @user_id, @title, @description, creation_date, expiration_date, is_sold, sold_date
         )
     end
 
     def destroy
-        self.class.db.execute('DELETE FROM users WHERE id = ?', @id)
+        self.class.db.execute('DELETE FROM products WHERE id = ?', @id)
     end
 end
