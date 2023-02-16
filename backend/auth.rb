@@ -2,7 +2,7 @@ require 'bcrypt'
 
 require_relative '../models/user'
 
-module Authentication
+module Auth
     def self.authenticate(user, password)
         return true if BCrypt::Password.new(user.encrypted_password) == password
 

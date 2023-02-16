@@ -1,19 +1,16 @@
 require 'sqlite3'
 require 'securerandom'
-require 'bcrypt'
 
-class Product
-    attr_accessor :id, :user_id, :title, :description, :creation_date, :expiration_date, :is_sold, :sold_date
+class Bid
+    attr_accessor :id, :user_id, :product_id, :amount, :bid_date, :is_accepted
 
-    def initialize(user_id, title, description, creation_date, expiration_date, is_sold, sold_date)
+    def initialize(user_id, product_id, amount, bid_date, is_accepted)
         @id = SecureRandom.uuid
         @user_id = user_id
-        @title = title
-        @description = description
-        @creation_date = creation_date
-        @expiration_date = expiration_date
-        @is_sold = is_sold
-        @sold_date = sold_date
+        @product_id = product_id
+        @amount = amount
+        @bid_date = bid_date
+        @is_accepted = is_accepted
     end
 
     def self.db
@@ -21,7 +18,7 @@ class Product
     end
 
     def self.find(id)
-        row = db.execute('SELECT * FROM products WHERE id = ?', id).first
+        row = db.execute('SELECT * FROM bids WHERE id = ?', id).first
         return nil unless row
 
         value = new(*row[1..-1])
@@ -69,21 +66,17 @@ class Product
     end
 
     def insert
-        creation_date = @creation_date.iso8601
-        expiration_date = @expiration_date.iso8601
+        bid_date = @bid_date.iso8601
 
-        sold_date = nil
-        sold_date = @sold_date.iso8601 if @sold_date.instance_of?(Time)
-
-        is_sold = 0
-        is_sold = 1 if @is_sold == true
+        is_accepted = 0
+        is_accepted = 1 if @is_accepted == true
 
         self.class.db.execute(
-            'INSERT INTO products (id, user_id, title, description, creation_date, expiration_date, is_sold, sold_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', @id, @user_id, @title, @description, creation_date, expiration_date, is_sold, sold_date
+            'INSERT INTO bids (id, user_id, product_id, amount, bid_date, is_accepted) VALUES (?, ?, ?, ?, ?, ?)', @id, @user_id, @product_id, @amount, bid_date, is_accepted
         )
     end
 
     def destroy
-        self.class.db.execute('DELETE FROM products WHERE id = ?', @id)
+        self.class.db.execute('DELETE FROM bids WHERE id = ?', @id)
     end
 end

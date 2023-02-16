@@ -48,8 +48,9 @@ class User
     def save_field(field)
         return if @id.nil?
 
+        # Check if the field exists as a public
         unless respond_to?(field)
-            puts "Error: #{field} is not a valid field for the User class."
+            puts "Error: #{field} is not a valid field for the class."
             return
         end
 
@@ -66,7 +67,7 @@ class User
         elsif new_value.is_a?(TrueClass) || new_value.is_a?(FalseClass)
             new_value = new_value ? 1 : 0
         end
-        old_value = self.class.db.execute("SELECT #{field} FROM users WHERE id = ?", @id).flatten.first
+        old_value = self.class.db.execute("SELECT #{field} FROM bids WHERE id = ?", @id).flatten.first
 
         # Check if the new field value is nil or empty
         if new_value.nil? || new_value.to_s.empty?
@@ -80,7 +81,7 @@ class User
             return
         end
 
-        self.class.db.execute("UPDATE users SET #{field} = ? WHERE id = ?", new_value, @id)
+        self.class.db.execute("UPDATE bids SET #{field} = ? WHERE id = ?", new_value, @id)
     end
 
     def insert
