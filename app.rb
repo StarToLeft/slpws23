@@ -7,6 +7,7 @@ require_relative 'models/product'
 require_relative 'models/bid'
 
 require_relative 'backend/auth'
+require_relative 'backend/product'
 
 db = SQLite3::Database.new('./db/marketplace.sqlite')
 db.execute('DELETE FROM bids')
@@ -21,8 +22,9 @@ puts 'Auth result: ' + Auth.authenticate(user, 'sdn72@£x81').to_s
 puts 'Auth result: ' + Auth.authenticate(user, 'sdn72@£x82').to_s
 
 creation_date = Time.now
-expiration_date = creation_date + (5 * 24 * 60 * 60)
-product = Product.new(user.id, 'Test', 'This is a test', creation_date, expiration_date, false, nil)
+# expiration_date = creation_date + (5 * 24 * 60 * 60)
+expiration_date = creation_date + 1
+product = Product.new(user.id, 'Test', 'This is a test', creation_date, expiration_date, false, nil, nil)
 product.insert
 
 product1 = Product.find(product.id)
@@ -32,8 +34,13 @@ user1 = User.find(user.id)
 puts user1.username
 
 # ? place a bid
-bid = Bid.new(user.id, product.id, 100, Time.now, false)
-bid.insert
+puts "Place bid: " + ProductManager.place_bid(user1, product1, 100).to_s
+puts "Place bid: " + ProductManager.place_bid(user1, product1, 100).to_s
+puts "Place bid: " + ProductManager.place_bid(user1, product1, 150).to_s
+
+sleep(2)
+
+puts "Place bid: " + ProductManager.place_bid(user1, product1, 180).to_s
 
 # get('/get') do
 #     slim(:home)

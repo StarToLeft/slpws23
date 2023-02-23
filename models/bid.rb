@@ -26,6 +26,15 @@ class Bid
         value
     end
 
+    def self.find_highest_bid(product_id)
+        row = db.execute('SELECT * FROM bids WHERE product_id = ? ORDER BY amount DESC LIMIT 1', product_id).first
+        return nil unless row
+
+        value = new(*row[1..-1])
+        value.id = row[0]
+        value
+    end
+
     def save_field(field)
         return if @id.nil?
 

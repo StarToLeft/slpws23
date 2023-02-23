@@ -3,9 +3,10 @@ require 'securerandom'
 require 'bcrypt'
 
 class Product
-    attr_accessor :id, :user_id, :title, :description, :creation_date, :expiration_date, :is_sold, :sold_date
+    attr_accessor :id, :user_id, :title, :description, :creation_date, :expiration_date, :is_sold, :sold_date,
+                  :winner_user_id
 
-    def initialize(user_id, title, description, creation_date, expiration_date, is_sold, sold_date)
+    def initialize(user_id, title, description, creation_date, expiration_date, is_sold, sold_date, winner_user_id)
         @id = SecureRandom.uuid
         @user_id = user_id
         @title = title
@@ -14,6 +15,7 @@ class Product
         @expiration_date = expiration_date
         @is_sold = is_sold
         @sold_date = sold_date
+        @winner_user_id = winner_user_id
     end
 
     def self.db
@@ -23,11 +25,17 @@ class Product
     def self.find(id)
         row = db.execute('SELECT * FROM products WHERE id = ?', id).first
         return nil unless row
-
+      
+        # Translate the data types of certain fields
+        row[4] = Time.iso8601(row[4]) if row[4]
+        row[5] = Time.iso8601(row[5]) if row[5]
+        row[6] = row[6] == 1 if row[6]
+        row[7] = Time.iso8601(row[7]) if row[7]
+      
         value = new(*row[1..-1])
         value.id = row[0]
         value
-    end
+      end
 
     def save_field(field)
         return if @id.nil?
@@ -51,7 +59,7 @@ class Product
         elsif new_value.is_a?(TrueClass) || new_value.is_a?(FalseClass)
             new_value = new_value ? 1 : 0
         end
-        old_value = self.class.db.execute("SELECT #{field} FROM bids WHERE id = ?", @id).flatten.first
+        old_value = self.class.db.execute("SELECT #{field} FROM products WHERE id = ?", @id).flatten.first
 
         # Check if the new field value is nil or empty
         if new_value.nil? || new_value.to_s.empty?
@@ -65,7 +73,7 @@ class Product
             return
         end
 
-        self.class.db.execute("UPDATE bids SET #{field} = ? WHERE id = ?", new_value, @id)
+        self.class.db.execute("UPDATE products SET #{field} = ? WHERE id = ?", new_value, @id)
     end
 
     def insert
@@ -79,11 +87,30 @@ class Product
         is_sold = 1 if @is_sold == true
 
         self.class.db.execute(
-            'INSERT INTO products (id, user_id, title, description, creation_date, expiration_date, is_sold, sold_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', @id, @user_id, @title, @description, creation_date, expiration_date, is_sold, sold_date
+            'INSERT INTO products (id, user_id, title, description, creation_date, expiration_date, is_sold, sold_date, winner_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', @id, @user_id, @title, @description, creation_date, expiration_date, is_sold, sold_date, nil
         )
     end
 
     def destroy
         self.class.db.execute('DELETE FROM products WHERE id = ?', @id)
+    end
+
+    def pick_winner
+        # Check if the product is sold
+        return false unless !@is_sold
+
+        # Check if the product has a bid
+        bid = Bid.find_highest_bid(@id)
+        return false unless bid
+
+        # Pick a winner
+        @winner_user_id = bid.user_id
+        save_field(:winner_user_id)
+
+        # Set is sold
+        @is_sold = true
+        save_field(:is_sold)
+
+        return true
     end
 end
