@@ -17,36 +17,7 @@ db.execute('DELETE FROM products')
 db.execute('DELETE FROM users')
 db.execute('VACUUM')
 
-user = User.new('StarToLeft', Auth.encrypt_password('sdn72@£x81'), nil, Time.now, 'anton.hagser@epsidel.se')
-user.insert
-
-puts 'Auth result: ' + Auth.authenticate(user, 'sdn72@£x81').to_s
-puts 'Auth result: ' + Auth.authenticate(user, 'sdn72@£x82').to_s
-
-creation_date = Time.now
-# expiration_date = creation_date + (5 * 24 * 60 * 60)
-expiration_date = creation_date + 1
-product = Product.new(user.id, 'Test', 'This is a test', creation_date, expiration_date, false, nil, nil)
-product.insert
-
-product1 = Product.find(product.id)
-puts product1.title
-
-user1 = User.find(user.id)
-puts user1.username
-
-# ? place a bid
-puts 'Place bid: ' + ProductManager.place_bid(user1, product1, 100).to_s
-puts 'Place bid: ' + ProductManager.place_bid(user1, product1, 100).to_s
-puts 'Place bid: ' + ProductManager.place_bid(user1, product1, 150).to_s
-
-sleep(2)
-
-puts 'Place bid: ' + ProductManager.place_bid(user1, product1, 180).to_s
-
-puts 'Product id: ' + product1.id
-
-get('/get') do
+get('/') do
     slim(:home)
 end
 
@@ -56,7 +27,13 @@ get('/profile/:username') do
 end
 
 get('/login') do
-    slim(:login)
+    # Redirect to home page if user is already logged in
+    # Replace with JWT
+    if session[:user_id]
+        redirect('/')
+    else
+        slim(:login, locals: { error: params[:error] })
+    end
 end
 
 post('/login') do
@@ -69,7 +46,8 @@ post('/login') do
 
         redirect('/')
     else
-        slim(:login)
+        error = 'Invalid username or password'
+        slim(:login, locals: { error: error })
     end
 end
 
@@ -79,16 +57,39 @@ get('/logout') do
 end
 
 get('/register') do
-    slim(:register)
+    slim(:register, locals: { error: params[:error] })
 end
 
 post('/register') do
-    # TODO: Password requirements
-    # Todo: Email check
-    # Todo: Username check
-    # Todo: introduce type checks
-    # Todo: check if account already exists
+    # Password requirements
+    password_regex = /\A(?=.{8,})(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[[:^alnum:]])/x
+    unless password_regex.match?(params[:password])
+        redirect("/register?error=#{URI.encode_www_form_component('Password does not meet requirements')}")
+    end
 
+    # Email check
+    email_regex = /\A[\w+\-.]+@[a-z\d-]+(\.[a-z\d-]+)*\.[a-z]+\z/i
+    unless email_regex.match?(params[:email])
+        redirect("/register?error=#{URI.encode_www_form_component('Invalid email')}")
+    end
+
+    # Username check
+    username_regex = /\A[a-zA-Z0-9]+\z/
+    unless username_regex.match?(params[:username])
+        redirect("/register?error=#{URI.encode_www_form_component('Invalid username')}")
+    end
+
+    # Type checks
+    unless params[:username].is_a?(String) && params[:password].is_a?(String) && params[:email].is_a?(String)
+        redirect("/register?error=#{URI.encode_www_form_component('Invalid input types')}")
+    end
+
+    # Check if account already exists
+    if User.find_by_username(params[:username]) || User.find_by_email(params[:email])
+        redirect("/register?error=#{URI.encode_www_form_component('Account already exists')}")
+    end
+
+    # Create new user and redirect to home page
     user = User.new(params[:username], Auth.encrypt_password(params[:password]), nil, Time.now, params[:email])
     user.insert
     redirect('/')

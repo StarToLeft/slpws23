@@ -1,1 +1,12 @@
-h2 Hi
+nav
+    ul
+        li
+            a href="/" Home
+        - if session[:user_id]
+            li
+                a href="/logout" Logout
+        - else
+            li
+                a href="/register" Register
+            li
+                a href="/login" Login
