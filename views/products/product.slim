@@ -1,0 +1,40 @@
+== slim :_header
+
+div class="product"
+    img src="https://cdn.discordapp.com/attachments/1089540710132363365/1091702114360762429/StarToLeft_Disney_closing_disney_world_after_50_years_692a4579-b359-41db-be4d-e703fb62a111.png" alt="Product image"
+
+    div class="product-info"
+        h2= product.title
+        p= product.description
+        
+        - if product.is_sold == true
+            - if error.class==String
+                .error= error
+            - if success.class==String
+                .success= success
+
+        div class="sidebar"
+            - if product.is_sold == true
+                a href='/accounts/#{winner.username}' Sold to #{winner.username}
+            - else
+                - if current_bid_price.class == Float
+                    p= "Current bid: $#{'%.2f' % current_bid_price}"
+                h3 class="bids-title" Bids
+                - if bids.length == 0
+                    p No bids
+                - else
+                    ul class="bids"
+                        - bids.each do |bid|
+                            li= "#{bid[:username]} - Amount: $#{'%.2f' % bid[:amount]}"
+
+                div class="current-bid"
+                    -  if current_bid_price.class == Float
+                        h3 Highest bid
+                        p= "$#{'%.2f' % current_bid_price}"
+
+                - if error.class==String
+                    .error= error
+                - if success.class==String
+                    .success= success
+
+                a class="place-bid-btn" href="/products/#{product.id}/bid" Place Bid

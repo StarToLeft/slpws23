@@ -1,0 +1,15 @@
+== slim :_header
+
+div class="account"
+    h1= "Welcome, #{user.username}!"
+    div class="account-info"
+        h2= "Your email: #{user.email}"
+        p="Is admin: #{user.is_admin ? 'Yes' : 'No'}"
+        h2= "Your products:"
+        - if products.length == 0
+            p= "You have no products"
+        - else
+            ul class="products"
+                - products.each do |product|
+                    li
+                        a style="color: blue; text-decoration: underline;" href="/products/#{product.id}"= product.title

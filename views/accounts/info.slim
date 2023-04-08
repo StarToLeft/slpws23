@@ -1,0 +1,12 @@
+== slim :_header
+
+div class="account"
+    h1 = user.username
+    h2 = "Won products:"
+    ul class="won-products"
+        - if won_products.length == 0
+            li No products won
+        - else
+            - won_products.each do |product|
+                li
+                    a style="color: blue; text-decoration: underline;" href="/products/#{product.id}"= product.title

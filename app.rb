@@ -11,25 +11,46 @@ require_relative 'models/bid'
 require_relative 'backend/auth'
 require_relative 'backend/product'
 
-db = SQLite3::Database.new('./db/marketplace.sqlite')
-db.execute('DELETE FROM bids')
-db.execute('DELETE FROM products')
-db.execute('DELETE FROM users')
-db.execute('VACUUM')
-
 get('/') do
-    slim(:home)
+    # Get all products
+    products = Product.all
+
+    # Get winners of products
+    product_placements = []
+    products.each do |product|
+        if product.is_sold && product.winner_user_id
+            winner = User.find(product.winner_user_id)
+            product_placements << { product: product, winner: winner }
+        else
+            product_placements << { product: product, winner: nil }
+        end
+    end
+
+    slim(:index, locals: { product_placements: product_placements })
 end
 
-get('/profile/:username') do
+get('/accounts/me') do
+    user_id = Auth.get_id(session[:token])
+    user = User.find(user_id)
+    products = Product.find_by_user_id(user.id)
+    slim(:'accounts/me', locals: { user: user, products: products })
+end
+
+get('/accounts/:username') do
+    puts params[:username]
+
     user = User.find_by_username(params[:username])
-    slim(:profile, locals: { user: user })
+    won_products = Product.find_by_winner_user_id(user.id)
+
+    slim(:'accounts/info', locals: { user: user, won_products: won_products })
 end
 
 get('/login') do
-    # Redirect to home page if user is already logged in
-    # Replace with JWT
-    if session[:user_id]
+    # Replace with JWT validation
+    jwt_validation_result = Auth.validate_jwt(session[:token]) if session[:token]
+
+    # Redirect to home page if user is already logged in and JWT is valid
+    if jwt_validation_result && jwt_validation_result[:valid]
         redirect('/')
     else
         slim(:login, locals: { error: params[:error] })
@@ -37,12 +58,11 @@ get('/login') do
 end
 
 post('/login') do
-    # TODO: add jwts (skip refresh tokens for now)
-
     user = User.find_by_username(params[:username])
+
     if user && Auth.authenticate(user, params[:password])
-        session[:user_id] = user.id
-        # TODO: replace user_id with token in session (json-web-token)
+        token = Auth.create_jwt(user.id)
+        session[:token] = token
 
         redirect('/')
     else
@@ -52,12 +72,12 @@ post('/login') do
 end
 
 get('/logout') do
-    session[:user_id] = nil
+    session[:token] = nil
     redirect('/')
 end
 
 get('/register') do
-    slim(:register, locals: { error: params[:error] })
+    slim(:register, locals: { error: params[:error], success: params[:success] })
 end
 
 post('/register') do
@@ -92,24 +112,66 @@ post('/register') do
     # Create new user and redirect to home page
     user = User.new(params[:username], Auth.encrypt_password(params[:password]), nil, Time.now, params[:email])
     user.insert
-    redirect('/')
+    redirect("/register?success=#{URI.encode_www_form_component('Account created successfully')}")
 end
 
-# Product
-get('/product/:product_id') do
+get('/products/new') do
+    slim(:'products/new')
+end
+
+get('/products/:product_id') do
     product = Product.find(params[:product_id])
-    puts product.inspect
-    slim(:product, locals: { product: product })
+    product = Product.find(params[:product_id]) if ProductManager.check_product_state(product.id) == true
+
+    winner = User.find(product.winner_user_id) if product.winner_user_id
+
+    db = Bid.db
+    db_bids = db.execute(
+        'SELECT amount, username FROM bids INNER JOIN users ON bids.user_id = users.id WHERE bids.product_id=?', product.id
+    )
+
+    bids = []
+    for db_bid in db_bids
+        bids.append({ amount: db_bid[0], username: db_bid[1] })
+    end
+
+    current_bid_price = bids[0][:amount].to_f if bids.length > 0
+
+    slim(:'products/product',
+         locals: { product: product, bids: bids, current_bid_price: current_bid_price, winner: winner, error: params[:error],
+                   success: params[:success] })
 end
 
-post('/product') do
+post('/products') do
     # TODO: introduce type checks
+    # TODO: get id from token
 
-    user = User.find(session[:user_id])
+    user_id = Auth.get_id(session[:token])
+
+    user = User.find(user_id)
     creation_date = Time.now
     expiration_date = creation_date + (5 * 24 * 60 * 60)
     product = Product.new(user.id, params[:title], params[:description], creation_date, expiration_date, false, nil,
                           nil)
     product.insert
+
     redirect('/')
+end
+
+get('/products/:product_id/bid') do
+    product = Product.find(params[:product_id])
+    slim(:'products/bid', locals: { product: product })
+end
+
+post('/products/:product_id/bid') do
+    user_id = Auth.get_id(session[:token])
+    product_id = params[:product_id]
+
+    # Try to place bid
+    result = ProductManager.place_bid(user_id, product_id, params[:amount].to_i)
+    if result[0]
+        redirect("/products/#{product_id}?success=#{URI.encode_www_form_component(result[1])}")
+    else
+        redirect("/products/#{product_id}?error=#{URI.encode_www_form_component(result[1])}")
+    end
 end

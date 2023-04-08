@@ -1,12 +1,11 @@
 require 'sqlite3'
-require 'securerandom'
-require 'bcrypt'
 
 class Product
     attr_accessor :id, :user_id, :title, :description, :creation_date, :expiration_date, :is_sold, :sold_date,
                   :winner_user_id
 
-    def initialize(user_id, title, description, creation_date, expiration_date, is_sold, sold_date, winner_user_id)
+    def initialize(user_id, title, description, creation_date, expiration_date, is_sold = nil, sold_date = nil,
+                   winner_user_id = nil)
         @id = SecureRandom.uuid
         @user_id = user_id
         @title = title
@@ -22,20 +21,59 @@ class Product
         @db ||= SQLite3::Database.new('./db/marketplace.sqlite')
     end
 
+    def self.all
+        db.execute('SELECT * FROM products').map do |row|
+            # Translate the data types of certain fields
+            row[4] = Time.iso8601(row[4]) if row[4]
+            row[5] = Time.iso8601(row[5]) if row[5]
+            row[6] = row[6] == 1 if row[6]
+            row[7] = Time.iso8601(row[7]) if row[7]
+            value = new(*row[1..-1])
+            value.id = row[0]
+            value
+        end
+    end
+
+    def self.find_by_winner_user_id(winner_user_id)
+        db.execute('SELECT * FROM products WHERE winner_user_id = ?', winner_user_id).map do |row|
+            # Translate the data types of certain fields
+            row[4] = Time.iso8601(row[4]) if row[4]
+            row[5] = Time.iso8601(row[5]) if row[5]
+            row[6] = row[6] == 1 if row[6]
+            row[7] = Time.iso8601(row[7]) if row[7]
+            value = new(*row[1..-1])
+            value.id = row[0]
+            value
+        end
+    end
+
+    def self.find_by_user_id(user_id)
+        db.execute('SELECT * FROM products WHERE user_id = ?', user_id).map do |row|
+            # Translate the data types of certain fields
+            row[4] = Time.iso8601(row[4]) if row[4]
+            row[5] = Time.iso8601(row[5]) if row[5]
+            row[6] = row[6] == 1 if row[6]
+            row[7] = Time.iso8601(row[7]) if row[7]
+            value = new(*row[1..-1])
+            value.id = row[0]
+            value
+        end
+    end
+
     def self.find(id)
         row = db.execute('SELECT * FROM products WHERE id = ?', id).first
         return nil unless row
-      
+
         # Translate the data types of certain fields
         row[4] = Time.iso8601(row[4]) if row[4]
         row[5] = Time.iso8601(row[5]) if row[5]
         row[6] = row[6] == 1 if row[6]
         row[7] = Time.iso8601(row[7]) if row[7]
-      
+
         value = new(*row[1..-1])
         value.id = row[0]
         value
-      end
+    end
 
     def save_field(field)
         return if @id.nil?
@@ -97,7 +135,7 @@ class Product
 
     def pick_winner
         # Check if the product is sold
-        return false unless !@is_sold
+        return false if @is_sold
 
         # Check if the product has a bid
         bid = Bid.find_highest_bid(@id)
@@ -111,6 +149,9 @@ class Product
         @is_sold = true
         save_field(:is_sold)
 
-        return true
+        @sold_date = Time.now
+        save_field(:sold_date)
+
+        true
     end
 end

@@ -1,0 +1,17 @@
+header
+    nav
+        ul class="main-navigation"
+            li
+                a href="/" Home
+            - if session[:token]
+                li
+                    a href="/products/new" class="new-product" New product
+        - if session[:token]
+            li class="main-navigation-logged-in"
+                a href="/logout" Logout
+                a href="/accounts/me"
+                    img class="profile-image" src="https://cdn.discordapp.com/attachments/1089540710132363365/1091702114360762429/StarToLeft_Disney_closing_disney_world_after_50_years_692a4579-b359-41db-be4d-e703fb62a111.png" width="64px" height="64px" /
+        - else
+            li class="buttons"
+                a href="/register" Register
+                a href="/login" Login

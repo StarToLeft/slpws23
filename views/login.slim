@@ -1,7 +1,6 @@
-h1 Login
+== slim :_header
 
-- if error
-    .error= error
+h1 class="login" Login
 
 form action="/login" method="post"
     label for="username" Username
@@ -9,5 +8,8 @@ form action="/login" method="post"
 
     label for="password" Password
     input type="password" id="password" name="password"
+
+    - if error
+        .error= error
 
     input type="submit" value="Login"

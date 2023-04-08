@@ -1,0 +1,12 @@
+== slim :_header
+
+h1 New Product
+
+form action="/products" method="post"
+    label for="title" Title
+    input type="text" id="title" name="title"
+
+    label for="description" Description
+    textarea id="description" name="description"
+
+    input type="submit" value="Create Product"

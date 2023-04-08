@@ -3,15 +3,16 @@ require 'securerandom'
 require 'bcrypt'
 
 class User
-    attr_accessor :id, :username, :encrypted_password, :pfp_file_id, :creation_date, :email
+    attr_accessor :id, :username, :encrypted_password, :pfp_file_id, :creation_date, :email, :is_admin
 
-    def initialize(username, encrypted_password, pfp_file_id, creation_date, email)
+    def initialize(username, encrypted_password, pfp_file_id, creation_date, email, is_admin = 0)
         @id = SecureRandom.uuid
         @username = username
         @encrypted_password = encrypted_password
         @pfp_file_id = pfp_file_id
         @creation_date = creation_date
         @email = email
+        @is_admin = is_admin
     end
 
     def self.db
@@ -88,7 +89,7 @@ class User
         creation_date = @creation_date.iso8601
 
         self.class.db.execute(
-            'INSERT INTO users (id, username, password, pfp_file_id, creation_date, email) VALUES (?, ?, ?, ?, ?, ?)', @id, @username, @encrypted_password, @pfp_file_id, creation_date, @email
+            'INSERT INTO users (id, username, password, pfp_file_id, creation_date, email, is_admin) VALUES (?, ?, ?, ?, ?, ?, ?)', @id, @username, @encrypted_password, @pfp_file_id, creation_date, @email, @is_admin
         )
     end
 

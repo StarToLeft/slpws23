@@ -26,6 +26,32 @@ class Bid
         value
     end
 
+    def self.find_by_user_id(user_id)
+        rows = db.execute('SELECT * FROM bids WHERE user_id = ?', user_id)
+        return nil unless rows
+
+        values = []
+        rows.each do |row|
+            value = new(*row[1..-1])
+            value.id = row[0]
+            values << value
+        end
+        values
+    end
+
+    def self.find_by_product_id(product_id)
+        rows = db.execute('SELECT * FROM bids WHERE product_id = ?', product_id)
+        return nil unless rows
+
+        values = []
+        rows.each do |row|
+            value = new(*row[1..-1])
+            value.id = row[0]
+            values << value
+        end
+        values
+    end
+
     def self.find_highest_bid(product_id)
         row = db.execute('SELECT * FROM bids WHERE product_id = ? ORDER BY amount DESC LIMIT 1', product_id).first
         return nil unless row

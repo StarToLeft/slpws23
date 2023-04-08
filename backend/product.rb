@@ -1,31 +1,36 @@
 module ProductManager
-    def self.check_product_state(product)
+    def self.check_product_state(product_id)
+        product = Product.find(product_id)
+
+        puts product.expiration_date
+        puts Time.now
+
         # Check if the product has a bid and a winner has been picked
         if product.expiration_date < Time.now and !product.is_sold
             # returns false if the product has no bid
             # returns true if the product has a bid and a winner has been picked
-            return product.pick_winner
+            product.pick_winner
         elsif product.is_sold
-            return true
+            true
         else
-            return false
+            false
         end
     end
 
-    def self.place_bid(user, product, amount)
+    def self.place_bid(user_id, product_id, amount)
         # Check the product state
-        if check_product_state(product)
-            return false
-        end
+        return [false, 'Product has already been sold'] if check_product_state(product_id)
 
         # Verify that the bid is higher than the current bid
-        bid = Bid.find_highest_bid(product.id)
-        return false if bid && amount <= bid.amount
+        bid = Bid.find_highest_bid(product_id)
+        return [false, 'Bid amount too low'] if bid && amount <= bid.amount
 
         # Place the bid
-        bid = Bid.new(user.id, product.id, amount, Time.now, false)
+        bid = Bid.new(user_id, product_id, amount, Time.now, false)
         bid.insert
 
-        return true
+        return [true, 'You won the auction!'] if check_product_state(product_id)
+
+        [true, 'Bid placed successfully']
     end
 end

@@ -1,7 +1,6 @@
-h1 Register
+== slim :_header
 
-- if error
-  .error= error
+h1 class="register" Register
 
 form action="/register" method="post"
     label for="username" Username
@@ -12,5 +11,10 @@ form action="/register" method="post"
 
     label for="password" Password
     input type="password" id="password" name="password"
+
+    - if error
+        .error= error
+    - if success
+        .success= success
 
     input type="submit" value="Register"

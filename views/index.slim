@@ -1,0 +1,13 @@
+== slim :_header
+
+div class="product-placements"
+    - product_placements.each do |product_placement|
+        div class="product-placement"
+            h2 = product_placement[:product].title
+            a href="/products/#{product_placement[:product].id}" View
+            - if product_placement[:product].is_sold == true
+                div class="product-placement-status product-placement-sold"
+                    p Sold to #{product_placement[:winner].username}
+            - else
+                div class="product-placement-status"
+                    p Bidding is open
