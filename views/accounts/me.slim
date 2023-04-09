@@ -5,7 +5,7 @@ div class="account"
     div class="account-info"
         h2= "Your email: #{user.email}"
         p="Is admin: #{user.is_admin ? 'Yes' : 'No'}"
-        h2= "Your products:"
+        h2= "Your product postings:"
         - if products.length == 0
             p= "You have no products"
         - else
@@ -13,3 +13,19 @@ div class="account"
                 - products.each do |product|
                     li
                         a style="color: blue; text-decoration: underline;" href="/products/#{product.id}"= product.title
+        h2= "Products won:"
+        - if won_products.length == 0
+            p= "You have not won any products"
+        - else
+            ul class="products"
+                - won_products.each do |won_product|
+                    li
+                        a style="color: blue; text-decoration: underline;" href="/products/#{won_product.id}"= won_product.title
+        h2="Account settings"
+        a style="color: blue; text-decoration: underline;" href="/accounts/edit"= "Edit account"
+        - if user.is_admin == true
+            h2="Admin actions:"
+            div class="admin-actions-container"
+                a style="color: blue; text-decoration: underline;" href="/admin/users"= "Manage users"
+                a style="color: blue; text-decoration: underline;" href="/admin/products"= "Manage products"
+                a style="color: blue; text-decoration: underline;" href="/admin/categories"= "Manage categories"

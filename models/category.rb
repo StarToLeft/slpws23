@@ -1,19 +1,47 @@
 require 'sqlite3'
 require 'securerandom'
 
+# The Category class represents a category in the database.
+#
+# @!attribute id
+#   @return [String] the universally unique identifier (UUID) of the category
+# @!attribute name
+#   @return [String] the name of the category
 class Category
-    attr_accessor :id, :name, :description
+    attr_accessor :id, :name
 
-    def initialize(_id, name, description)
+    # Initializes a new Category instance with the given name.
+    #
+    # @param name [String] the name of the category
+    def initialize(name)
         @id = SecureRandom.uuid
         @name = name
-        @description = description
     end
 
+    # @!visibility private
     def self.db
-        @db ||= SQLite3::Database.new('./db/marketplace.sqlite')
+        unless defined?(@db)
+            @db = SQLite3::Database.new('./db/marketplace.sqlite')
+            @db.execute('PRAGMA foreign_keys = ON')
+        end
+        @db
     end
 
+    # Retrieves all categories from the database.
+    #
+    # @return [Array<Category>] an array of Category instances
+    def self.all
+        db.execute('SELECT * FROM categories').map do |row|
+            value = new(*row[1..-1])
+            value.id = row[0]
+            value
+        end
+    end
+
+    # Finds a category by its ID.
+    #
+    # @param id [String] the UUID of the category to find
+    # @return [Category, nil] the Category instance if found, or nil if not found
     def self.find(id)
         row = db.execute('SELECT * FROM categories WHERE id = ?', id).first
         return nil unless row
@@ -23,6 +51,10 @@ class Category
         value
     end
 
+    # Saves a specified field of the Category instance to the database.
+    #
+    # @param field [Symbol] the field to save
+    # @return [void]
     def save_field(field)
         return if @id.nil?
 
@@ -45,7 +77,7 @@ class Category
         elsif new_value.is_a?(TrueClass) || new_value.is_a?(FalseClass)
             new_value = new_value ? 1 : 0
         end
-        old_value = self.class.db.execute("SELECT #{field} FROM bids WHERE id = ?", @id).flatten.first
+        old_value = self.class.db.execute("SELECT #{field} FROM categories WHERE id = ?", @id).flatten.first
 
         # Check if the new field value is nil or empty
         if new_value.nil? || new_value.to_s.empty?
@@ -59,14 +91,19 @@ class Category
             return
         end
 
-        self.class.db.execute("UPDATE bids SET #{field} = ? WHERE id = ?", new_value, @id)
+        self.class.db.execute("UPDATE categories SET #{field} = ? WHERE id = ?", new_value, @id)
     end
 
+    # Inserts the category into the database.
+    #
+    # @return [void]
     def insert
-        self.class.db.execute('INSERT INTO categories (id, name, description) VALUES (?, ?, ?)', @id, @name,
-                              @description)
+        self.class.db.execute('INSERT INTO categories (id, name) VALUES (?, ?)', @id, @name)
     end
 
+    # Deletes the category from the database.
+    #
+    # @return [void]
     def destroy
         self.class.db.execute('DELETE FROM categories WHERE id = ?', @id)
     end

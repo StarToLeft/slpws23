@@ -77,12 +77,22 @@ h1 {
     text-align: center;
 }
 
-form {
+.form {
     max-width: 500px;
     margin: 0 auto;
     padding: 20px;
     border: 1px solid #ccc;
     border-radius: 5px;
+}
+
+.form-group {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.form-group > div {
+    width: 50%;
 }
 
 label {
@@ -94,7 +104,11 @@ label {
 input[type="text"],
 input[type="email"],
 input[type="password"],
-input[type="number"] {
+input[type="number"],
+input[type="date"],
+input[type="time"],
+input[type="file"],
+select {
     display: block;
     width: 100%;
     padding: 8px;
@@ -330,4 +344,102 @@ textarea {
     height: 50px;
     border-radius: 50%;
     object-fit: cover;
+}
+
+.admin-users {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 40px;
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px solid #ccc;
+}
+
+.admin-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.admin-actions > form > input[type="submit"] {
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 14px;
+    transition: 0.1s ease-in-out;
+    border: none;
+    cursor: pointer;
+}
+
+.admin-actions > form:nth-child(2) {
+    margin-left: 10px;
+}
+
+.negative {
+    background-color: #ff0000 !important;
+}
+
+.positive {
+    background-color: #00c81f !important;
+}
+
+.admin-actions-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-actions-container > a {
+    margin-bottom: 1rem;
+}
+
+.create-category {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin-bottom: 40px;
+    margin-top: 20px;
+    gap: 20px;
+    padding: 20px;
+    border: 1px solid #ccc;
+    justify-content: center;
+}
+
+.create-category > h1 {
+    text-align: center;
+}
+
+select {
+    display: block;
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 16px;
+    background-color: #fff;
+    appearance: none;
+    cursor: pointer;
+}
+
+select[multiple] {
+    height: auto;
+    min-height: 80px; /* Adjust the height as needed */
+}
+
+option {
+    padding: 4px 8px;
+    background-color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+option:hover,
+option:focus {
+    background-color: #f0f0f0;
 }

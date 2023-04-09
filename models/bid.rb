@@ -1,9 +1,30 @@
 require 'sqlite3'
 require 'securerandom'
 
+# The Bid class represents a bid in the database.
+#
+# @!attribute id
+#   @return [String] the universally unique identifier (UUID) of the bid
+# @!attribute user_id
+#   @return [Integer] the user ID associated with the bid
+# @!attribute product_id
+#   @return [Integer] the product ID associated with the bid
+# @!attribute amount
+#   @return [Float] the bid amount
+# @!attribute bid_date
+#   @return [Time] the date and time the bid was placed
+# @!attribute is_accepted
+#   @return [Boolean] whether the bid is accepted or not
 class Bid
     attr_accessor :id, :user_id, :product_id, :amount, :bid_date, :is_accepted
 
+    # Initializes a new Bid instance with the given user ID, product ID, amount, bid date, and accepted status.
+    #
+    # @param user_id [Integer] the user ID
+    # @param product_id [Integer] the product ID
+    # @param amount [Float] the bid amount
+    # @param bid_date [Time] the date and time the bid was placed
+    # @param is_accepted [Boolean] whether the bid is accepted or not
     def initialize(user_id, product_id, amount, bid_date, is_accepted)
         @id = SecureRandom.uuid
         @user_id = user_id
@@ -13,10 +34,19 @@ class Bid
         @is_accepted = is_accepted
     end
 
+    # @!visibility private
     def self.db
-        @db ||= SQLite3::Database.new('./db/marketplace.sqlite')
+        unless defined?(@db)
+            @db = SQLite3::Database.new('./db/marketplace.sqlite')
+            @db.execute('PRAGMA foreign_keys = ON')
+        end
+        @db
     end
 
+    # Finds a bid by its ID.
+    #
+    # @param id [String] the UUID of the bid to find
+    # @return [Bid, nil] the Bid instance if found, or nil if not found
     def self.find(id)
         row = db.execute('SELECT * FROM bids WHERE id = ?', id).first
         return nil unless row
@@ -26,6 +56,10 @@ class Bid
         value
     end
 
+    # Finds bids by their associated user ID.
+    #
+    # @param user_id [Integer] the user ID to find bids for
+    # @return [Array<Bid>] an array of Bid instances
     def self.find_by_user_id(user_id)
         rows = db.execute('SELECT * FROM bids WHERE user_id = ?', user_id)
         return nil unless rows
@@ -39,6 +73,10 @@ class Bid
         values
     end
 
+    # Finds bids by their associated product ID.
+    #
+    # @param product_id [Integer] the product ID to find bids for
+    # @return [Array<Bid>] an array of Bid instances
     def self.find_by_product_id(product_id)
         rows = db.execute('SELECT * FROM bids WHERE product_id = ?', product_id)
         return nil unless rows
@@ -52,6 +90,10 @@ class Bid
         values
     end
 
+    # Finds the highest bid for a given product ID.
+    #
+    # @param product_id [Integer] the product ID to find the highest bid for
+    # @return [Bid, nil] the Bid instance with the highest amount, or nil if not found
     def self.find_highest_bid(product_id)
         row = db.execute('SELECT * FROM bids WHERE product_id = ? ORDER BY amount DESC LIMIT 1', product_id).first
         return nil unless row
@@ -61,6 +103,10 @@ class Bid
         value
     end
 
+    # Saves a specified field of the Bid instance to the database.
+    #
+    # @param field [Symbol] the field to save
+    # @return [void]
     def save_field(field)
         return if @id.nil?
 
@@ -100,6 +146,9 @@ class Bid
         self.class.db.execute("UPDATE bids SET #{field} = ? WHERE id = ?", new_value, @id)
     end
 
+    # Inserts the bid into the database.
+    #
+    # @return [void]
     def insert
         bid_date = @bid_date.iso8601
 
@@ -111,6 +160,9 @@ class Bid
         )
     end
 
+    # Deletes the bid from the database.
+    #
+    # @return [void]
     def destroy
         self.class.db.execute('DELETE FROM bids WHERE id = ?', @id)
     end

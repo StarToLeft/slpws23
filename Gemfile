@@ -9,6 +9,8 @@ gem 'bcrypt'
 gem 'byebug'
 gem 'sinatra-contrib'
 gem 'webrick'
-gem 'rubocop'
+gem 'rubocop', "1.30"
 gem 'jwt'
 gem 'solargraph'
+gem 'yard', "0.9.28"
+gem 'capybara'

@@ -1,7 +1,8 @@
 == slim :_header
 
 div class="product"
-    img src="https://cdn.discordapp.com/attachments/1089540710132363365/1091702114360762429/StarToLeft_Disney_closing_disney_world_after_50_years_692a4579-b359-41db-be4d-e703fb62a111.png" alt="Product image"
+    - if media.class == Media && media.file_id != nil && extension != nil
+        img src="/uploads/#{media.file_id}.#{extension}" alt="Product image"
 
     div class="product-info"
         h2= product.title
@@ -38,3 +39,10 @@ div class="product"
                     .success= success
 
                 a class="place-bid-btn" href="/products/#{product.id}/bid" Place Bid
+
+                h3 Categories
+                - if categories.length == 0
+                    p No categories
+                - else
+                    - categories.each do |category|
+                        p= category

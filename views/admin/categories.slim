@@ -1,0 +1,23 @@
+== slim :_header
+
+div class="admin-users"
+    h1= "Manage categoriees"
+    a style="color: blue; text-decoration: underline;" href="/admin/categories/new" New category
+    div style="margin-top: 20px;"
+        - if error.class==String
+            .error = error
+        - if success.class==String
+            .success= success
+    - if categories.length == 0
+        p= "There are no categories"
+    - else
+        table
+            tr
+                th= "Name"
+                th= "Actions"
+            - categories.each do |category|
+                tr
+                    td= category.name
+                    td class="admin-actions"
+                        form method="post" action="/admin/categories/#{category.id}/delete"
+                            input class="negative" type="submit" value="Delete"

@@ -2,11 +2,28 @@
 
 h1 New Product
 
-form action="/products" method="post"
+form class="form" action="/products" method="post" enctype="multipart/form-data"
     label for="title" Title
     input type="text" id="title" name="title"
 
     label for="description" Description
     textarea id="description" name="description"
+
+    div class="form-group"
+        div
+            label for="expiration_date" Expiration Date
+            input type="date" value="#{current_date}" id="expiration_date" name="expiration_date"
+
+        div
+            label for="expiration_time" Expiration Time
+            input type="time" value="#{current_time}" id="expiration_time" name="expiration_time"
+
+    label for="categories" Category
+    select id="categories" name="categories[]" multiple="multiple"
+        - categories.each do |category|
+            option value="#{category.id}"= category.name
+
+    label for="image" Image Upload
+    input type="file" id="image" name="image"
 
     input type="submit" value="Create Product"

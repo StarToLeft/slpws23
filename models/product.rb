@@ -1,9 +1,39 @@
 require 'sqlite3'
 
+# The Bid class represents a bid in the database.
+#
+# @!attribute [rw] id
+#   @return [String] the unique identifier for the product
+# @!attribute [rw] user_id
+#   @return [String] the unique identifier of the user who created the product
+# @!attribute [rw] title
+#   @return [String] the title of the product
+# @!attribute [rw] description
+#   @return [String] the description of the product
+# @!attribute [rw] creation_date
+#   @return [Time] the creation date of the product
+# @!attribute [rw] expiration_date
+#   @return [Time] the expiration date of the product
+# @!attribute [rw] is_sold
+#   @return [Boolean, nil] whether the product is sold (true), not sold (false), or not set (nil)
+# @!attribute [rw] sold_date
+#   @return [Time, nil] the date the product was sold or nil if not sold
+# @!attribute [rw] winner_user_id
+#   @return [String, nil] the unique identifier of the user who won the product or nil if not won
 class Product
     attr_accessor :id, :user_id, :title, :description, :creation_date, :expiration_date, :is_sold, :sold_date,
                   :winner_user_id
 
+    # Initializes a new Product object.
+    #
+    # @param user_id [String] the unique identifier of the user who created the product
+    # @param title [String] the title of the product
+    # @param description [String] the description of the product
+    # @param creation_date [Time] the creation date of the product
+    # @param expiration_date [Time] the expiration date of the product
+    # @param is_sold [Boolean, nil] whether the product is sold (defaults to nil)
+    # @param sold_date [Time, nil] the date the product was sold (defaults to nil)
+    # @param winner_user_id [String, nil] the unique identifier of the user who won the product (defaults to nil)
     def initialize(user_id, title, description, creation_date, expiration_date, is_sold = nil, sold_date = nil,
                    winner_user_id = nil)
         @id = SecureRandom.uuid
@@ -17,10 +47,18 @@ class Product
         @winner_user_id = winner_user_id
     end
 
+    # @!visibility private
     def self.db
-        @db ||= SQLite3::Database.new('./db/marketplace.sqlite')
+        unless defined?(@db)
+            @db = SQLite3::Database.new('./db/marketplace.sqlite')
+            @db.execute('PRAGMA foreign_keys = ON')
+        end
+        @db
     end
 
+    # Retrieves all products from the database.
+    #
+    # @return [Array<Product>] an array of Product objects
     def self.all
         db.execute('SELECT * FROM products').map do |row|
             # Translate the data types of certain fields
@@ -34,6 +72,10 @@ class Product
         end
     end
 
+    # Finds products by the winner user ID.
+    #
+    # @param winner_user_id [String] the unique identifier of the winning user
+    # @return [Array<Product>] an array of Product objects
     def self.find_by_winner_user_id(winner_user_id)
         db.execute('SELECT * FROM products WHERE winner_user_id = ?', winner_user_id).map do |row|
             # Translate the data types of certain fields
@@ -47,6 +89,10 @@ class Product
         end
     end
 
+    # Finds products by the user ID.
+    #
+    # @param user_id [String] the unique identifier of the user who created the product
+    # @return [Array<Product>] an array of Product objects
     def self.find_by_user_id(user_id)
         db.execute('SELECT * FROM products WHERE user_id = ?', user_id).map do |row|
             # Translate the data types of certain fields
@@ -60,6 +106,10 @@ class Product
         end
     end
 
+    # Finds a product by its ID.
+    #
+    # @param id [String] the unique identifier of the product
+    # @return [Product, nil] the Product object or nil if not found
     def self.find(id)
         row = db.execute('SELECT * FROM products WHERE id = ?', id).first
         return nil unless row
@@ -75,6 +125,10 @@ class Product
         value
     end
 
+    # Saves a single field of the Product object to the database.
+    #
+    # @param field [Symbol] the field name to be saved
+    # @return [void]
     def save_field(field)
         return if @id.nil?
 
@@ -114,6 +168,9 @@ class Product
         self.class.db.execute("UPDATE products SET #{field} = ? WHERE id = ?", new_value, @id)
     end
 
+    # Inserts a new product record into the database.
+    #
+    # @return [void]
     def insert
         creation_date = @creation_date.iso8601
         expiration_date = @expiration_date.iso8601
@@ -129,10 +186,16 @@ class Product
         )
     end
 
+    # Deletes the product from the database.
+    #
+    # @return [void]
     def destroy
         self.class.db.execute('DELETE FROM products WHERE id = ?', @id)
     end
 
+    # Picks the winner of the product if it has not been sold and has a bid.
+    #
+    # @return [Boolean] true if a winner was successfully picked, false otherwise
     def pick_winner
         # Check if the product is sold
         return false if @is_sold

@@ -1,0 +1,17 @@
+== slim :_header
+
+h1 class="login" Account
+
+form class="form" action="/accounts/edit" method="post"
+    label for="username" Username
+    input type="text" id="username" name="username" value="#{user.username}"
+
+    label for="email" Email
+    input type="text" name="email" value="#{user.email}"
+
+    - if error
+        .error= error
+    - elsif success
+        .success= success
+
+    input type="submit" value="Update account"

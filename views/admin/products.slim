@@ -1,0 +1,22 @@
+== slim :_header
+
+div class="admin-users"
+    h1= "Manage products"
+    - if products.length == 0
+        p= "There are no products"
+    - else
+        table
+            tr
+                th= "Name"
+                th= "Actions"
+            - products.each do |product|
+                tr
+                    td= product[:product].title
+                    td class="admin-actions"
+                        - if product[:product].is_sold == true
+                            a href='/accounts/#{product[:winner].username}' Sold to #{product[:winner].username}
+                        - else
+                            form method="post" action="/admin/products/#{product[:product].id}/pick-winner"
+                                input class="positive" type="submit" value="Pick winner"
+                        form method="post" action="/admin/products/#{product[:product].id}/delete"
+                            input class="negative" type="submit" value="Delete"
