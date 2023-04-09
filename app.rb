@@ -18,9 +18,8 @@ require_relative 'models/category'
 require_relative 'backend/auth'
 require_relative 'backend/product'
 
-# use Rack::Protection
-
 configure do
+    use Rack::Protection
     use Rack::Protection::FormToken
 end
 
@@ -397,8 +396,8 @@ get('/products/:product_id') do
 
     winner = User.find(product.winner_user_id) if product.winner_user_id
 
-    db = Bid.db
-    db.execute("PRAGMA foreign_keys = ON")
+    db = Media.db
+    db.execute('PRAGMA foreign_keys = ON')
     db_bids = db.execute(
         'SELECT amount, username FROM bids INNER JOIN users ON bids.user_id = users.id WHERE bids.product_id=?', product.id
     )
@@ -420,8 +419,8 @@ get('/products/:product_id') do
     extension = FileModel.find(firstMedia.file_id).extension if firstMedia
 
     # List of all categories assigned to product
-    db = Bid.db
-    db.execute("PRAGMA foreign_keys = ON")
+    db = Media.db
+    db.execute('PRAGMA foreign_keys = ON')
     db_categories = db.execute(
         'SELECT name FROM product_category_rel INNER JOIN categories ON product_category_rel.category_id = categories.id WHERE product_category_rel.product_id=?', product.id
     )
