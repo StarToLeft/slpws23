@@ -1,4 +1,5 @@
 require 'sinatra'
+require 'rack/protection'
 require 'slim'
 require 'sqlite3'
 
@@ -16,6 +17,12 @@ require_relative 'models/category'
 
 require_relative 'backend/auth'
 require_relative 'backend/product'
+
+# use Rack::Protection
+
+configure do
+    use Rack::Protection::FormToken
+end
 
 # Store failed login attempts
 $failed_login_attempts = {}
@@ -56,6 +63,8 @@ helpers do
 end
 
 # Route definitions
+# Common for all routes is the use of session[:token] which contains a JWT when the user is signed in
+# The JWT contains the user ID and a expiration time, it is used to identify the user
 
 # Display the home page with a list of products
 get('/') do
@@ -80,9 +89,8 @@ end
 get('/accounts/me') do
     # Check if user is logged in with helper method
     redirect('/login') unless is_logged_in
+    user = current_user
 
-    user_id = Auth.get_id(session[:token])
-    user = User.find(user_id)
     products = Product.find_by_user_id(user.id)
     won_products = Product.find_by_winner_user_id(user.id)
 
@@ -93,9 +101,7 @@ end
 get('/accounts/edit') do
     # Check if user is logged in with helper method
     redirect('/login') unless is_logged_in
-
-    user_id = Auth.get_id(session[:token])
-    user = User.find(user_id)
+    user = current_user
 
     slim(:'accounts/edit', locals: { user: user, success: params[:success], error: params[:error] })
 end
@@ -104,7 +110,6 @@ end
 post('/accounts/edit') do
     # Check if user is logged in with helper method
     redirect('/login') unless is_logged_in
-
     user = current_user
 
     # check if username and email are given
@@ -117,7 +122,7 @@ post('/accounts/edit') do
         redirect("/accounts/edit?error=#{URI.encode_www_form_component('Username already taken!')}")
     end
 
-    # Email check
+    # Email regex check (not perfect, but good enough for this project)
     email_regex = /\A[\w+\-.]+@[a-z\d-]+(\.[a-z\d-]+)*\.[a-z]+\z/i
     unless email_regex.match?(params[:email])
         redirect("/accounts/edit?error=#{URI.encode_www_form_component('Invalid email')}")

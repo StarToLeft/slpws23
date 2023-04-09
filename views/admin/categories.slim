@@ -20,4 +20,5 @@ div class="admin-users"
                     td= category.name
                     td class="admin-actions"
                         form method="post" action="/admin/categories/#{category.id}/delete"
+                            input type="hidden" name="authenticity_token" value="#{env['rack.session'][:csrf]}"
                             input class="negative" type="submit" value="Delete"

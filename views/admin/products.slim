@@ -17,6 +17,8 @@ div class="admin-users"
                             a href='/accounts/#{product[:winner].username}' Sold to #{product[:winner].username}
                         - else
                             form method="post" action="/admin/products/#{product[:product].id}/pick-winner"
+                                input type="hidden" name="authenticity_token" value="#{env['rack.session'][:csrf]}"
                                 input class="positive" type="submit" value="Pick winner"
                         form method="post" action="/admin/products/#{product[:product].id}/delete"
+                            input type="hidden" name="authenticity_token" value="#{env['rack.session'][:csrf]}"
                             input class="negative" type="submit" value="Delete"

@@ -4,6 +4,7 @@ div class="create-category"
     div class="place-bid-form"
         h1 Create Category
         form class="form" action="/admin/categories" method="post"
+            input type="hidden" name="authenticity_token" value="#{env['rack.session'][:csrf]}"
             label for="name" Name
             input type="text" name="name" id="name"
             input type="submit" value="Create"

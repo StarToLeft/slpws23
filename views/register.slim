@@ -3,6 +3,8 @@
 h1 class="register" Register
 
 form class="form" action="/register" method="post"
+    input type="hidden" name="authenticity_token" value="#{env['rack.session'][:csrf]}"
+
     label for="username" Username
     input type="text" id="username" name="username"
 

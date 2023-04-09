@@ -18,9 +18,11 @@ div class="admin-users"
                     td= user.is_admin ? 'Yes' : 'No'
                     td class="admin-actions"
                         form method="post" action="/admin/users/#{user.id}/toggle-admin"
+                            input type="hidden" name="authenticity_token" value="#{env['rack.session'][:csrf]}"
                             - if user.is_admin == true
                                 input class="negative" type="submit" value="Remove admin"
                             - else
                                 input class="positive" type="submit" value="Make admin"
                         form method="post" action="/admin/users/#{user.id}/delete"
+                            input type="hidden" name="authenticity_token" value="#{env['rack.session'][:csrf]}"
                             input class="negative" type="submit" value="Delete"

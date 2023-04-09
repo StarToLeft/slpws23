@@ -4,6 +4,7 @@ div class="place-bid"
     div class="place-bid-form"
         h1 Place Bid
         form class="form" action="/products/#{product.id}/bid" method="post"
+            input type="hidden" name="authenticity_token" value="#{env['rack.session'][:csrf]}"
             label for="amount" Amount
             input type="number" name="amount" id="amount" step="1" min="1" value="1"
             input type="submit" value="Place Bid"

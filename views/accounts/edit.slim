@@ -3,6 +3,8 @@
 h1 class="login" Account
 
 form class="form" action="/accounts/edit" method="post"
+    input type="hidden" name="authenticity_token" value="#{env['rack.session'][:csrf]}"
+
     label for="username" Username
     input type="text" id="username" name="username" value="#{user.username}"
 
